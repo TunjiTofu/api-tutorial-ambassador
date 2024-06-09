@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\AmbassadorController;
 use App\Http\Controllers\AuthController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
@@ -19,16 +20,26 @@ Route::middleware('auth:sanctum')->get('/user', function (Request $request) {
     return $request->user();
 });
 
-//Admin
-Route::controller(AuthController::class)->prefix('admin')->group(function () {
-    Route::post('register', 'register')->name('register');
-    Route::post('login', 'login')->name('login');
+Route::get('/test', function () {
+    return 'Hilda';
+});
 
-    Route::middleware(['auth:sanctum'])->group(function () {
-        Route::get('user', 'authUser')->name('user');
-        Route::post('logout', 'logout')->name('logout');
+//Admin
+Route::prefix('admin')->group(function () {
+    Route::post('register', [AuthController::class, 'register'])->name('register');
+    Route::post('login', [AuthController::class, 'login'])->name('login');
+
+    Route::middleware(['auth:sanctum', 'scope.admin'])->group(function () {
+        Route::get('user', [AuthController::class, 'authUser'])->name('user');
+        Route::post('logout', [AuthController::class, 'logout'])->name('logout');
+        Route::put('users/info', [AuthController::class, 'updateInfo'])->name('update.info');
+        Route::put('users/password', [AuthController::class, 'updatePassword'])->name('update.password');
+
+        
+        Route::get('ambassadors', [AmbassadorController::class, 'index'])->name('ambassadors');
     });
 });
+
 
 
 //Ambassador

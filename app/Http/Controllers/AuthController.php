@@ -3,6 +3,8 @@
 namespace App\Http\Controllers;
 
 use App\Http\Requests\RegisterRequest;
+use App\Http\Requests\UpdateInfoRequest;
+use App\Http\Requests\UpdatePasswordRequest;
 use App\Models\User;
 use Auth;
 use Cookie;
@@ -36,7 +38,7 @@ class AuthController extends Controller
         $user = Auth::user();
 
         //generate JWT Access token
-        $jwt = $user->createToken('token')->plainTextToken;
+        $jwt = $user->createToken('token', ['admin'])->plainTextToken;
 
         //send token using cookie
         $cookie = cookie('jwt', $jwt, 60 * 24); // 1day - time is in minute
@@ -51,17 +53,37 @@ class AuthController extends Controller
     }
 
     ###########Authenticated User
-    function authUser (Request $request) : Response{
+    function authUser(Request $request): Response
+    {
         //return $request->user();
         $user = auth()->user();
         return response()->json($user);
     }
 
-    function logout() : Response {
+    function logout(): Response
+    {
         $cookie = Cookie::forget('jwt');
         return response([
             'message' => 'logout successful',
         ])->withCookie($cookie);
     }
-    
+
+    function updateInfo(UpdateInfoRequest $request): JsonResponse
+    {
+        $user = $request->user();
+        $user->update($request->only('first_name', 'last_name', 'email'));
+        return response()->json($user, Response::HTTP_OK);
+    }
+
+    function updatePassword(UpdatePasswordRequest $request): JsonResponse
+    {
+        $user = $request->user();
+        $user->update([
+            'password' => Hash::make($request->input('password')),
+        ]);
+        return response()->json([
+            'message' => 'Passwword Updated',
+            'data' => $user
+        ],Response::HTTP_ACCEPTED);
+    }
 }
